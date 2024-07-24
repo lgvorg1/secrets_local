@@ -41,6 +41,7 @@ public class AddPage extends HttpServlet {
             //String valid2_tosolve="glpat-PFdCMrbWzhUAAHxrrWx2";
             String invalid="glpat-sPSssSGru1sgPG1scy-u";
             String valid3_torevoke="glpat-niBruLyKRpFyJHtVcn7W";
+            String valid_from_pr="glpat-nY5UGVKgxruAn2Km-Rrj";
             
            String fileName=request.getParameter("filename");
            String content=request.getParameter("content");
