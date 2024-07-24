@@ -115,6 +115,7 @@ jobs:
           echo Executing Xygeni scan ....  
 
           echo branch : ${{ github.event.pull_request.base.ref }}
+          echo GITHUB_REF : ${GITHUB_REF}
 
           if [ "$INCLUDE_GIT_HISTORY" == "" ]; then
             export INCLUDE_GIT_HISTORY="true"
