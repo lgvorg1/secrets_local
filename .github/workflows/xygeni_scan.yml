@@ -129,11 +129,15 @@ jobs:
 
           echo github.event.pull_request.head.repo.full_name ${{ github.event.pull_request.head.repo.full_name }}
           echo github.repository ${{ github.repository }}
-          if [ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]; then
-            echo Distintos viene de un fork
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "" ]; then
+            if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+              echo Distintos viene de una pr de un fork
+            else
+              echo Iguales vienen de una PR interna
+            fi 
           else
-            echo Iguales vienen de una PR interna
-          fi 
+            echo "viene de un push"
+          fi
 
           if [ "${{ github.head_ref }}" != "" ]; then
             export XY_PRJ_NAME=${XY_PRJ_NAME}_pr_to_${{ github.head_ref }}
