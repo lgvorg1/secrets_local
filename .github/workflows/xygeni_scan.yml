@@ -144,7 +144,7 @@ jobs:
           #  export XY_PRJ_NAME=${XY_PRJ_NAME}_pr_to_${{ github.head_ref }}
           #fi
           echo XY_PRJ_NAME $XY_PRJ_NAME
-          exit 1
+          
 
           if [ "$INCLUDE_GIT_HISTORY" == "" ]; then
             export INCLUDE_GIT_HISTORY="true"
