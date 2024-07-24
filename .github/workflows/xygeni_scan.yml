@@ -4,10 +4,11 @@ name: Xygeni CI/CD Security Scan
 
 # Controls when the workflow will run
 on:
-  push: 
-    branches: [ "main" ]
+  push: # branch github.ref
+    branches: [ "main" ] 
+
   # Triggers the workflow on pull request events for the "main" branch.
-  pull_request_target: 
+  pull_request_target:  # branch github.head_ref
     branches: [ "main" ]
 
   # Allows you to run this workflow manually from the Actions tab sd 
@@ -116,6 +117,9 @@ jobs:
 
           echo branch : ${{ github.event.pull_request.base.ref }}
           echo GITHUB_REF : ${GITHUB_REF}
+          echo github.ref ${{ github.ref }}
+          echo github.head_ref ${{ github.head_ref }}
+          exit 1
 
           if [ "$INCLUDE_GIT_HISTORY" == "" ]; then
             export INCLUDE_GIT_HISTORY="true"
