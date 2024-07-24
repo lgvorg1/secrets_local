@@ -127,6 +127,12 @@ jobs:
           echo to : $to
           echo from : $from
 
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]; then
+            echo Distintos viene de un fork
+          else
+            echo Iguales vienen de una PR interna
+          fi 
+
           if [ "${{ github.head_ref }}" != "" ]; then
             export XY_PRJ_NAME=${XY_PRJ_NAME}_pr_to_${{ github.head_ref }}
           fi
