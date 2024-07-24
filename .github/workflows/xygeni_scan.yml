@@ -127,6 +127,8 @@ jobs:
           echo to : $to
           echo from : $from
 
+          echo github.event.pull_request.head.repo.full_name ${{ github.event.pull_request.head.repo.full_name }}
+          echo github.repository ${{ github.repository }}
           if [ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]; then
             echo Distintos viene de un fork
           else
