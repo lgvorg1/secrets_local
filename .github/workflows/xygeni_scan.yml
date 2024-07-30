@@ -8,7 +8,7 @@ on:
     branches: [ "main" ] 
 
   # Triggers the workflow on pull request events for the "main" branch.
-  pull_request_target:  # branch github.head_ref
+  pull_request:  # branch github.head_ref
     branches: [ "main" ]
 
   # Allows you to run this workflow manually from the Actions tab sd 
@@ -79,7 +79,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
       - uses: actions/checkout@v4
         name: Checking out PR code
-        if: ${{ github.event_name == 'pull_request_target' }}
+        if: ${{ github.event_name == 'pull_request' }}
         with:
           # Number of commits to fetch. 0 indicates all history for all branches and tags.
           # Default: 1
