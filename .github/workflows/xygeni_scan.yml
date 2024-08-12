@@ -1,0 +1,181 @@
+# This is a basic workflow to help you get started with Actions 
+
+name: Xygeni CI/CD Security Scan
+
+# Controls when the workflow will run
+on:
+  push: # branch github.ref
+    branches: [ "main" ] 
+
+  # Triggers the workflow on pull request events for the "main" branch.
+  pull_request_target:  # branch github.head_ref
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab sd 
+  workflow_dispatch:
+    inputs:
+      secret-history:
+          type: boolean
+          description: Include git history ?
+          default: true
+      xy-env:
+          type: choice
+          description: Xygeni Env
+          options: 
+          - PRO
+          - DEMO
+          - PARTNERS
+          default: PRO
+ 
+env:
+  INCLUDE_GIT_HISTORY: ${{ github.event.inputs.secret-history }}
+  XY_ENV: ${{ github.event_name == 'push' && 'PRO' || github.event.inputs.xy-env }}
+  XY_PRJ_NAME: GitHub-${{ github.event.repository.name }}_demo
+
+
+jobs:
+  # This workflow contains a single job called "xygeni_security_scan"
+  xygeni_cicd_scan:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    # ref: "refs/pull/${{ github.event.number }}/merge"
+    # ref: ${{ github.event.pull_request.head.sha }}
+  
+    steps:
+
+      - name: Set Xygeni env 
+        run: |
+
+          case "$XY_ENV" in 
+            PRO)
+              echo "PRO"
+              echo XY_USERNAME=${{ secrets.XY_USERNAME_PRO }} >> $GITHUB_ENV
+              echo XY_PASSWORD=${{ secrets.XY_PASSWORD_PRO }} >> $GITHUB_ENV
+              echo XY_URL=${{ secrets.XY_URL_PRO }} >> $GITHUB_ENV
+              ;;
+            DEMO)
+              echo "DEMO"
+              echo XY_USERNAME=${{ secrets.XY_USERNAME_DEMO }} >> $GITHUB_ENV
+              echo XY_PASSWORD=${{ secrets.XY_PASSWORD_DEMO }} >> $GITHUB_ENV
+              echo XY_URL=${{ secrets.XY_URL_DEMO }} >> $GITHUB_ENV
+              ;;
+            PARTNERS)
+              echo "PARTNERS"
+              echo XY_USERNAME=${{ secrets.XY_USERNAME_PARTNERS }} >> $GITHUB_ENV
+              echo XY_PASSWORD=${{ secrets.XY_PASSWORD_PARTNERS }} >> $GITHUB_ENV
+              echo XY_URL=${{ secrets.XY_URL_PARTNERS }} >> $GITHUB_ENV
+              ;;
+            *)
+              echo "DEFAULT (PRO)"
+              echo XY_USERNAME=${{ secrets.XY_USERNAME_PRO }} >> $GITHUB_ENV
+              echo XY_PASSWORD=${{ secrets.XY_PASSWORD_PRO }} >> $GITHUB_ENV
+              echo XY_URL=${{ secrets.XY_URL_PRO }} >> $GITHUB_ENV
+              ;;
+          esac
+
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
+      - uses: actions/checkout@v4
+        name: Checking out PR code
+        if: ${{ github.event_name == 'pull_request_target' }}
+        with:
+          # Number of commits to fetch. 0 indicates all history for all branches and tags.
+          # Default: 1
+          fetch-depth: '0'
+          # This is to get the PR code instead of the repo code
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+        name: Checking out main code
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        with:
+          # Number of commits to fetch. 0 indicates all history for all branches and tags..
+          # Default: 1
+          fetch-depth: '0'
+
+
+      # Runs a single command using the runners shell.
+      - name: Git Log.
+        run: git log
+
+
+      # Runs a set of commands using the runners shell..
+      - name: Download Xygeni Scanner 
+        run: |
+          echo Downloading Xygeni Scanner ....
+          curl -L https://get.xygeni.io/latest/scanner/install.sh | /bin/bash -s -- -u $XY_USERNAME -p $XY_PASSWORD -s $XY_URL -d ${GITHUB_WORKSPACE}/scanner 
+          
+          
+      # Runs a set of commands using the runners shell
+      - name: Execution Xygeni Scanner (vuln)
+        run: |
+          set +e
+          echo Executing Xygeni scan ....  
+
+          echo branch : ${{ github.event.pull_request.base.ref }}
+          echo GITHUB_REF : ${GITHUB_REF}
+          echo github.ref ${{ github.ref }}
+          echo github.head_ref ${{ github.head_ref }}
+          echo GITHUB_REPOSITORY ${GITHUB_REPOSITORY}
+          echo github.repository ${{ github.repository }}
+
+          to=$(echo "${{ github.ref }}" | cut -d "/" -f 3)
+          from=${{ github.head_ref }}
+          echo to : $to
+          echo from : $from
+
+          echo github.event.pull_request.head.repo.full_name ${{ github.event.pull_request.head.repo.full_name }}
+          echo github.repository ${{ github.repository }}
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" != "" ]; then
+            if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+              echo Distintos viene de una pr de un fork
+              export XY_PRJ_NAME=${XY_PRJ_NAME}_external_pr_from_${from}_to_${to}
+            else
+              echo Iguales vienen de una PR interna
+              export XY_PRJ_NAME=${XY_PRJ_NAME}_external_pr_from_${from}_to_${to}
+            fi 
+          else
+            echo "viene de un push"
+          fi
+
+          
+
+          if [ "$INCLUDE_GIT_HISTORY" == "" ]; then
+            export INCLUDE_GIT_HISTORY="true"
+          fi
+
+          if [ "$INCLUDE_GIT_HISTORY" == "true" ]; then
+            echo "***********************"
+            echo "Executing over history"
+            echo "***********************"
+            ${GITHUB_WORKSPACE}/scanner/xygeni scan --run="inventory,secrets,misconf" --secrets-mode=history --include-collaborators   -n $XY_PRJ_NAME   --dir ${GITHUB_WORKSPACE} --exclude=**/scanner/**
+          else
+            echo "***********************"
+            echo "Not including history"
+            echo "***********************"
+            ${GITHUB_WORKSPACE}/scanner/xygeni scan --run="inventory,secrets,misconf"                        --include-collaborators   -n $XY_PRJ_NAME   --dir ${GITHUB_WORKSPACE} --exclude=**/scanner/** \
+              --fail-on="file:${GITHUB_WORKSPACE}/GuardRails/secrets-critical.xyflow" 
+            retVal=$?
+            echo retVal $retVal
+            if [ $retVal -ne 0 ]; then
+              echo "======================================="
+              echo "Detected Critical Secret(s) !!!! "
+              echo "Breaking the build to avoid secrets into the protected branch !!!! "
+              echo "======================================="
+              mw=""
+              text="Detected secrets !!!! "
+              #echo "::error file=app.js,line=10,col=15::$text"
+              echo "::error $mw::$text"
+              text="Breaking the build to avoid secrets into the protected branch !!!! "
+              #echo "::error file=app.js,line=10,col=15::$text"
+              echo "::error $mw::$text"
+              exit $retVal
+            fi
+          fi
+          
+        env:
+          GITHUB_PAT: ${{ secrets.GH_PAT }}
+          XY_PRJ_NAME: ${{ env.XY_PRJ_NAME }} 

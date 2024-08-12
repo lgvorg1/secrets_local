@@ -1,0 +1,13 @@
+# ... Other confsddvsvdfgdfgigurdfgdfgadsfsdfsdfsdsdfsdfftion propertxxxxies ...
+repos:
+  # ... more repos and hooks ...
+
+  - repo: https://github.com/xygeni/xygeni-action 
+    rev: v2.1
+    hooks:
+    - id: xygeni
+      stages: [commit]
+      args: [
+        '-q', 'scan', '--format=text',
+        '--run=secrets,suspectdeps,misconf,iac,codetamper,compliance',
+        '--fail-on=critical']

@@ -1,0 +1,6 @@
+src/.xygeni.secrets.baseline.json
+.xygeni.secrets.baseline.json
+src/github/github
+org_scan.bat
+secrets.secrets.txt
+logs/noproject/noscan_noproject_nouuid.log
