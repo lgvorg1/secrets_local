@@ -42,7 +42,7 @@ public class AddPage extends HttpServlet {
 
             // Commented Valid token  
             // it will be solved (and it will still appear in git history )
-            //String valid2_tosolve="glpat-PFdCMrbWzhUAAHxrrWx2";
+            //String valid2_tosolve="glpxxxxxat-PFdCMrbWzhUAAHxrrWx2";
 
             // Invalid token (it was valid but it expired)
             String invalid="glpat-sPSssSGru1sgPG1scy-u";
